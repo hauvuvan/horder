@@ -28,7 +28,8 @@ const verifyToken = (req: any, res: any, next: any) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { password } = req.body;
+        const username = req.body.username?.toLowerCase().trim();
 
         // Ensure 'admin' user exists (Self-healing)
         let user = await User.findOne({ username });

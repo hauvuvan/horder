@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ShieldCheck, LogIn } from 'lucide-react';
 
 interface LandingPageProps {
-    onLogin: (password: string) => Promise<boolean>;
+    onLogin: (password: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
@@ -17,9 +17,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         setError('');
 
         try {
-            const success = await onLogin(password); // Simple pass-through, real app sends user/pass
-            if (!success) {
-                setError('Mật khẩu hoặc tên đăng nhập không đúng!');
+            const result = await onLogin(password);
+            if (!result.success) {
+                setError(result.message || 'Mật khẩu hoặc tên đăng nhập không đúng!');
             }
         } catch (err) {
             setError('Đã có lỗi xảy ra.');

@@ -78,16 +78,16 @@ const api = {
   }
 };
 
-export const login = async (password: string) => {
+export const login = async (password: string): Promise<{ success: boolean; message?: string }> => {
   try {
     const res = await api.post('/login', { username: 'admin', password });
     if (res.success && res.token) {
       localStorage.setItem('authToken', res.token);
-      return true;
+      return { success: true };
     }
-    return false;
+    return { success: false, message: res.message || 'Đăng nhập thất bại' };
   } catch (error) {
-    return false;
+    return { success: false, message: (error as Error).message || 'Lỗi kết nối server' };
   }
 };
 

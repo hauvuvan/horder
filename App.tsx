@@ -32,12 +32,12 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = async (password: string) => {
-    const success = await login(password);
-    if (success) {
+    const result = await login(password);
+    if (result.success) {
       setIsAuthenticated(true);
       localStorage.setItem('isAuthenticated', 'true');
     }
-    return success;
+    return result;
   };
 
   const handleLogout = () => {
@@ -133,8 +133,8 @@ const App: React.FC = () => {
               setIsMobileMenuOpen(false);
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${currentView === 'account'
-                ? 'bg-indigo-600 text-white font-medium'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              ? 'bg-indigo-600 text-white font-medium'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               }`}
           >
             <User size={20} />
