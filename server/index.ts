@@ -13,6 +13,7 @@ const PORT = process.env.PORT || 5001;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
+app.set('trust proxy', 1); // Trust Vercel proxy
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
