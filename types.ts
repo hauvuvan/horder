@@ -49,7 +49,7 @@ export interface Order {
   createdAt: string;
 }
 
-export type ViewState = 'dashboard' | 'inventory' | 'customers' | 'orders';
+export type ViewState = 'dashboard' | 'inventory' | 'customers' | 'orders' | 'account';
 
 export const USAGE_OPTIONS = [
   '1 tháng',

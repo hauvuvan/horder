@@ -7,23 +7,33 @@ const API_URL = '/api';
 const api = {
   get: async (endpoint: string) => {
     try {
-      const response = await fetch(`${API_URL}${endpoint}`);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
       if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
       return await response.json();
     } catch (error) {
       console.error(`GET ${endpoint} failed:`, error);
-      return [];
+      throw error;
     }
   },
 
   post: async (endpoint: string, data: any) => {
     try {
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+      // if (!response.ok) throw new Error(`API Error: ${response.statusText}`); 
+      // Allow 400/401 to pass through for auth handling, or handle generic errors
       return await response.json();
     } catch (error) {
       console.error(`POST ${endpoint} failed:`, error);
@@ -33,10 +43,14 @@ const api = {
 
   put: async (endpoint: string, data: any) => {
     try {
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
       return await response.json();
@@ -48,8 +62,12 @@ const api = {
 
   delete: async (endpoint: string) => {
     try {
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
       });
       if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
       return await response.json();
@@ -60,6 +78,36 @@ const api = {
   }
 };
 
+export const login = async (password: string) => {
+  try {
+    const res = await api.post('/login', { username: 'admin', password });
+    if (res.success && res.token) {
+      localStorage.setItem('authToken', res.token);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const getProfile = async () => {
+  return await api.get('/profile');
+};
+
+export const updateProfile = async (fullName: string) => {
+  const res = await api.put('/profile', { fullName });
+  return res.success;
+};
+
+export const changePassword = async (oldPassword: string, newPassword: string) => {
+  try {
+    const res = await api.put('/password', { oldPassword, newPassword });
+    return res;
+  } catch (e) {
+    return { success: false, message: 'Lỗi kết nối' };
+  }
+};
 
 // --- EXPORTED SERVICE FUNCTIONS (API) ---
 

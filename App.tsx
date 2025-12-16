@@ -1,20 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Package, Users, ShoppingCart, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, Users, ShoppingCart, Menu, X, LogOut, User } from 'lucide-react';
 import { ViewState } from './types';
 import InventoryView from './components/InventoryView';
 import CustomerView from './components/CustomerView';
 import OrderView from './components/OrderView';
 import DashboardView from './components/DashboardView';
-import { seedData } from './services/storage';
+import LandingPage from './components/LandingPage';
+import AccountView from './components/AccountView';
+import { seedData, login } from './services/storage';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [orderViewTab, setOrderViewTab] = useState<'list' | 'create'>('list');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const didInitRef = useRef(false);
 
   useEffect(() => {
-    // Initialize demo data if empty, ensuring it only runs once per session
+    const savedAuth = localStorage.getItem('isAuthenticated');
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+
     if (!didInitRef.current) {
       didInitRef.current = true;
       const init = async () => {
@@ -24,10 +31,28 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const handleLogin = async (password: string) => {
+    const success = await login(password);
+    if (success) {
+      setIsAuthenticated(true);
+      localStorage.setItem('isAuthenticated', 'true');
+    }
+    return success;
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAuthenticated');
+  };
+
   const handleQuickCreateOrder = () => {
     setOrderViewTab('create');
     setCurrentView('orders');
   };
+
+  if (!isAuthenticated) {
+    return <LandingPage onLogin={handleLogin} />;
+  }
 
   const navItems = [
     { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
@@ -38,15 +63,17 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (currentView) {
-      case 'dashboard': 
+      case 'dashboard':
         return <DashboardView onCreateOrder={handleQuickCreateOrder} />;
-      case 'inventory': 
+      case 'inventory':
         return <InventoryView />;
-      case 'orders': 
+      case 'orders':
         return <OrderView initialTab={orderViewTab} />;
-      case 'customers': 
+      case 'customers':
         return <CustomerView />;
-      default: 
+      case 'account':
+        return <AccountView />;
+      default:
         return <DashboardView onCreateOrder={handleQuickCreateOrder} />;
     }
   };
@@ -54,7 +81,7 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800">
       {/* Mobile Menu Button */}
-      <button 
+      <button
         className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-white rounded-lg shadow-md"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
@@ -72,7 +99,7 @@ const App: React.FC = () => {
             HORDER
           </h1>
         </div>
-        
+
         <nav className="p-4 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -82,24 +109,47 @@ const App: React.FC = () => {
                 key={item.id}
                 onClick={() => {
                   if (item.id === 'orders') {
-                    setOrderViewTab('list'); // Default to list when clicking sidebar
+                    setOrderViewTab('list');
                   }
                   setCurrentView(item.id as ViewState);
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive 
-                  ? 'bg-indigo-600 text-white font-medium' 
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                  ? 'bg-indigo-600 text-white font-medium'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon size={20} />
                 {item.label}
               </button>
             );
           })}
+
+          <hr className="border-slate-800 my-4" />
+
+          <button
+            onClick={() => {
+              setCurrentView('account');
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${currentView === 'account'
+                ? 'bg-indigo-600 text-white font-medium'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+          >
+            <User size={20} />
+            Tài khoản
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-red-400 hover:bg-slate-800 hover:text-red-300"
+          >
+            <LogOut size={20} />
+            Đăng xuất
+          </button>
         </nav>
-        
+
         <div className="absolute bottom-0 w-full p-6 border-t border-slate-800 text-xs text-slate-500">
           &copy; 2024 HORDER App
         </div>
