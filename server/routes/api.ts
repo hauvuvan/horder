@@ -30,17 +30,19 @@ router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // Seed default admin if no users exist
-        const count = await User.countDocuments();
-        if (count === 0) {
+        // Ensure 'admin' user exists (Self-healing)
+        let user = await User.findOne({ username });
+
+        if (!user && username === 'admin') {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash('admin123', salt);
-            const admin = new User({ username: 'admin', password: hashedPassword });
-            await admin.save();
+            user = new User({ username: 'admin', password: hashedPassword });
+            await user.save();
+            console.log('Admin account created / restored.');
+        } else if (!user) {
+            return res.status(400).json({ success: false, message: 'User not found' });
         }
 
-        const user = await User.findOne({ username });
-        if (!user) return res.status(400).json({ success: false, message: 'User not found' });
 
         let validPass = false;
         try {
