@@ -1,0 +1,5 @@
+{
+  "name": "HORDER",
+  "description": "Ứng dụng quản lý kho, khách hàng và đơn hàng toàn diện. Tích hợp quản lý giá biến động, lịch sử mua hàng và tạo đơn linh hoạt.",
+  "requestFramePermissions": []
+}
