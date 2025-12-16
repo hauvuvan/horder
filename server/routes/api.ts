@@ -218,4 +218,59 @@ router.delete('/orders/:id', verifyToken, async (req, res) => {
     }
 });
 
+// --- BACKUP / RESTORE ---
+
+router.get('/backup', verifyToken, async (req, res) => {
+    try {
+        const products = await Product.find({}, '-_id -__v');
+        const customers = await Customer.find({}, '-_id -__v');
+        const orders = await Order.find({}, '-_id -__v');
+        const users = await User.find({}, '-_id -__v');
+
+        const backupData = {
+            products,
+            customers,
+            orders,
+            users,
+            timestamp: new Date().toISOString()
+        };
+
+        res.json(backupData);
+    } catch (err) {
+        res.status(500).json({ message: 'Backup failed' });
+    }
+});
+
+router.post('/restore', verifyToken, async (req, res) => {
+    try {
+        const { products, customers, orders, users } = req.body;
+
+        if (!products || !customers || !orders) {
+            return res.status(400).json({ message: 'Invalid backup file format' });
+        }
+
+        // Clear existing data
+        await Product.deleteMany({});
+        await Customer.deleteMany({});
+        await Order.deleteMany({});
+
+        // Optional: Restore users? Be careful with current session. 
+        // Let's only restore users if explicitly provided and maybe skip current admin to avoid lockout?
+        // Or just overwrite. The user warned about it.
+        if (users && users.length > 0) {
+            await User.deleteMany({});
+            await User.insertMany(users);
+        }
+
+        await Product.insertMany(products);
+        await Customer.insertMany(customers);
+        await Order.insertMany(orders);
+
+        res.json({ success: true, message: 'Restore completed successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Restore failed: ' + (err as Error).message });
+    }
+});
+
 export default router;

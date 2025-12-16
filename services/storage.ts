@@ -191,13 +191,41 @@ export const deleteOrder = async (id: string): Promise<void> => {
 };
 
 // --- BACKUP / RESTORE ---
+// --- BACKUP / RESTORE ---
 export const backupData = async () => {
-  alert("Tính năng Backup chưa được hỗ trợ trên phiên bản Cloud (MongoDB).");
+  try {
+    const data = await api.get('/backup');
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `horder-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert("Backup thất bại: " + (e as Error).message);
+  }
 };
 
 export const restoreData = (file: File, callback: (success: boolean, message?: string) => void) => {
-  alert("Tính năng Restore chưa được hỗ trợ trên phiên bản Cloud (MongoDB).");
-  callback(false, "Not implemented in Cloud mode");
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const json = JSON.parse(e.target?.result as string);
+      const res = await api.post('/restore', json);
+      if (res.success) {
+        callback(true);
+      } else {
+        callback(false, res.message);
+      }
+    } catch (err) {
+      callback(false, (err as Error).message);
+    }
+  };
+  reader.readAsText(file);
 };
 
 // --- SEED DATA ---
