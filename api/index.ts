@@ -33,6 +33,8 @@ const customerSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     phone: { type: String, required: true },
+    email: String,
+    fbLink: String,
     createdAt: String
 });
 const Customer = mongoose.models.Customer || mongoose.model('Customer', customerSchema);
