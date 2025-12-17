@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, X } from 'lucide-react';
 import { Product, Customer, Order } from '../types';
 import * as db from '../services/storage';
 import { getDurationDays } from '../utils/date';
@@ -33,6 +33,8 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
 
   // Delete Modal State
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteOrderInfo, setDeleteOrderInfo] = useState<{ id: string, name: string } | null>(null);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -145,23 +147,20 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
 
   // --- Delete Logic ---
   const onRequestDelete = (id: string) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này vĩnh viễn?")) {
-      setDeleteId(id);
-    }
+    const order = orders.find(o => o.id === id);
+    setDeleteOrderInfo({ id, name: order?.customerName || 'Đơn hàng' });
+    setIsDeleteModalOpen(true);
   }
 
-  useEffect(() => {
-    const confirmDeleteOrder = async () => {
-      if (deleteId) {
-        setLoading(true);
-        await db.deleteOrder(deleteId);
-        await loadData();
-        setLoading(false);
-        setDeleteId(null);
-      }
-    }
-    confirmDeleteOrder();
-  }, [deleteId]);
+  const handleConfirmDelete = async () => {
+    if (!deleteOrderInfo) return;
+    setLoading(true);
+    await db.deleteOrder(deleteOrderInfo.id);
+    await loadData();
+    setLoading(false);
+    setIsDeleteModalOpen(false);
+    setDeleteOrderInfo(null);
+  };
 
 
   if (loading && orders.length === 0) {
@@ -226,6 +225,46 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
           onClose={() => setIsRefundModalOpen(false)}
           onSubmit={handleSubmitRefund}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && deleteOrderInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 bg-red-50 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-red-800 flex items-center gap-2">
+                <AlertTriangle size={20} className="text-red-600" />
+                Xác nhận xóa đơn hàng
+              </h3>
+              <button onClick={() => setIsDeleteModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
+                <p className="font-medium">Bạn có chắc chắn muốn xóa đơn hàng của <strong>{deleteOrderInfo.name}</strong>?</p>
+                <p className="mt-2 text-red-600">⚠️ Hành động này không thể hoàn tác!</p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={loading}
+                  className="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} /> {loading ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
