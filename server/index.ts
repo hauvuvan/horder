@@ -10,8 +10,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
-// Fallback to provided URI if env var is missing (for immediate fix)
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://hauvanvo:laEjtdo4J8SxOHCu@horder.0w6aikr.mongodb.net/?appName=HORDER';
+// Fallback is dangerous for public repos. Rely ONLY on Environment Variables.
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
 app.set('trust proxy', 1); // Trust Vercel proxy
