@@ -143,13 +143,23 @@ export const getCustomers = async (): Promise<Customer[]> => {
 };
 
 export const createCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer> => {
-  // Check duplicate phone is now handled by backend or we can do a quick check here if we want to avoid call
-  // For robustness, let backend handle it or check via GET.
-  // The simple backend we wrote just creates. Let's do a client-side check to match previous logic logic
+  // Check if customer with same phone already exists
   const customers = await getCustomers();
   const existing = customers.find(c => c.phone === customerData.phone);
-  if (existing) return existing;
 
+  if (existing) {
+    // Customer exists - update with any new info (email, fbLink, name)
+    const updatedCustomer: Customer = {
+      ...existing,
+      name: customerData.name || existing.name,
+      email: customerData.email || existing.email,
+      fbLink: customerData.fbLink || existing.fbLink
+    };
+    await updateCustomer(updatedCustomer);
+    return updatedCustomer;
+  }
+
+  // Create new customer
   const newCustomer = {
     ...customerData,
     id: generateId(),
