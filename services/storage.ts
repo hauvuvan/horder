@@ -164,6 +164,11 @@ export const updateCustomer = async (customer: Customer): Promise<void> => {
   await api.put(`/customers/${customer.id}`, customer);
 };
 
+// Delete customer
+export const deleteCustomer = async (id: string): Promise<void> => {
+  await api.delete(`/customers/${id}`);
+};
+
 // --- ORDERS ---
 export const getOrders = async (): Promise<Order[]> => {
   // Backend sorts by createdAt desc already

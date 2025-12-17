@@ -155,7 +155,23 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
   const handleConfirmDelete = async () => {
     if (!deleteOrderInfo) return;
     setLoading(true);
+
+    // Get the order to find its customerId before deleting
+    const orderToDelete = orders.find(o => o.id === deleteOrderInfo.id);
+    const customerId = orderToDelete?.customerId;
+
+    // Delete the order
     await db.deleteOrder(deleteOrderInfo.id);
+
+    // Check if customer has any other orders
+    if (customerId) {
+      const remainingOrders = orders.filter(o => o.customerId === customerId && o.id !== deleteOrderInfo.id);
+      if (remainingOrders.length === 0) {
+        // Customer has no more orders, delete them too
+        await db.deleteCustomer(customerId);
+      }
+    }
+
     await loadData();
     setLoading(false);
     setIsDeleteModalOpen(false);
