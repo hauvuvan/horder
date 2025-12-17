@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Search, Filter, AlertCircle, Clock, Trash2, RefreshCcw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Search, Filter, AlertCircle, Clock, Trash2, RefreshCcw, X, User, Phone, FileText, Calendar, Package } from 'lucide-react';
 import { Order } from '../../types';
 import { calculateExpiry } from '../../utils/date';
 import { formatCurrency } from '../../utils/format';
@@ -23,6 +23,9 @@ const OrderList: React.FC<OrderListProps> = ({
     onOpenRefundModal,
     onRequestDelete
 }) => {
+    // Order Detail Modal State
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
     // Filter Orders Logic
     const filteredOrders = useMemo(() => orders.filter(order => {
         let matchesStatus = true;
@@ -50,7 +53,8 @@ const OrderList: React.FC<OrderListProps> = ({
         const matchesSearch =
             order.customerName.toLowerCase().includes(term) ||
             order.customerPhone.includes(term) ||
-            order.id.toLowerCase().includes(term);
+            order.id.toLowerCase().includes(term) ||
+            (order.notes && order.notes.toLowerCase().includes(term));
 
         return matchesStatus && matchesSearch;
     }), [orders, statusFilter, searchTerm]);
@@ -111,7 +115,7 @@ const OrderList: React.FC<OrderListProps> = ({
                             filteredOrders.map((order) => {
                                 const isCancelled = order.status === 'cancelled';
                                 return (
-                                    <tr key={order.id} className={`hover:bg-gray-50 transition group ${isCancelled ? 'bg-gray-50 opacity-75' : ''}`}>
+                                    <tr key={order.id} onClick={() => setSelectedOrder(order)} className={`hover:bg-gray-50 transition group cursor-pointer ${isCancelled ? 'bg-gray-50 opacity-75' : ''}`}>
                                         <td className="px-6 py-4 font-mono text-xs text-gray-500 align-top">
                                             #{order.id.slice(0, 6)}
                                             {isCancelled && <div className="text-[10px] font-bold text-red-500 uppercase mt-1">Đã hủy</div>}
@@ -176,7 +180,7 @@ const OrderList: React.FC<OrderListProps> = ({
                                         </td>
                                         <td className="px-6 py-4 text-center align-top pt-8">
                                             {!isCancelled && (
-                                                <div className="flex justify-center gap-2">
+                                                <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => onOpenRefundModal(order)}
                                                         className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition"
@@ -201,6 +205,114 @@ const OrderList: React.FC<OrderListProps> = ({
                     </tbody>
                 </table>
             </div>
+
+            {/* Order Detail Modal */}
+            {selectedOrder && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+                            <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                                <Package size={20} className="text-indigo-600" />
+                                Chi tiết đơn hàng #{selectedOrder.id.slice(0, 6)}
+                            </h3>
+                            <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-gray-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto space-y-6">
+                            {/* Customer Info */}
+                            <div className="grid grid-cols-2 gap-4 bg-indigo-50 p-4 rounded-lg">
+                                <div>
+                                    <p className="text-xs text-indigo-400 uppercase font-bold mb-2">Khách hàng</p>
+                                    <p className="text-gray-800 font-medium flex items-center gap-2">
+                                        <User size={14} className="text-indigo-500" /> {selectedOrder.customerName}
+                                    </p>
+                                    <p className="text-gray-600 text-sm flex items-center gap-2 mt-1">
+                                        <Phone size={14} className="text-indigo-500" /> {selectedOrder.customerPhone}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-indigo-400 uppercase font-bold mb-2">Ngày tạo</p>
+                                    <p className="text-gray-800 font-medium flex items-center gap-2">
+                                        <Calendar size={14} className="text-indigo-500" /> {new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}
+                                    </p>
+                                    <p className="text-sm font-bold mt-1">
+                                        <span className={`px-2 py-1 rounded-full text-xs ${selectedOrder.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                            {selectedOrder.status === 'cancelled' ? 'Đã hủy' : 'Hoàn thành'}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Order Notes */}
+                            {selectedOrder.notes && (
+                                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                    <p className="text-xs text-yellow-600 uppercase font-bold mb-2 flex items-center gap-1">
+                                        <FileText size={12} /> Ghi chú
+                                    </p>
+                                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{selectedOrder.notes}</p>
+                                </div>
+                            )}
+
+                            {/* Products List */}
+                            <div>
+                                <h4 className="font-bold text-gray-800 mb-3">Sản phẩm ({selectedOrder.items.length})</h4>
+                                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-gray-50 text-gray-600 font-semibold">
+                                            <tr>
+                                                <th className="px-4 py-3">Tên sản phẩm</th>
+                                                <th className="px-4 py-3">Thời hạn</th>
+                                                <th className="px-4 py-3 text-right">Giá bán</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {selectedOrder.items.map((item, idx) => (
+                                                <tr key={idx} className="bg-white">
+                                                    <td className="px-4 py-3 font-medium text-gray-800">{item.productName}</td>
+                                                    <td className="px-4 py-3 text-gray-600">{item.usageTime}</td>
+                                                    <td className="px-4 py-3 text-right text-emerald-600 font-medium">
+                                                        {formatCurrency(item.priceAtSale)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Total */}
+                            <div className="flex justify-between items-center border-t border-gray-200 pt-4">
+                                <span className="font-bold text-gray-800 text-lg">Tổng cộng:</span>
+                                <span className={`text-2xl font-bold ${selectedOrder.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-indigo-600'}`}>
+                                    {formatCurrency(selectedOrder.totalAmount)}
+                                </span>
+                            </div>
+
+                            {/* Refund Info */}
+                            {selectedOrder.status === 'cancelled' && selectedOrder.refundInfo && (
+                                <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                                    <p className="text-xs text-red-600 uppercase font-bold mb-2">Thông tin hoàn tiền</p>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-gray-600">Hoàn khách:</span>
+                                            <span className="ml-2 font-bold text-red-600">-{formatCurrency(selectedOrder.refundInfo.refundToCustomer)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-600">NCC hoàn:</span>
+                                            <span className="ml-2 font-bold text-emerald-600">+{formatCurrency(selectedOrder.refundInfo.refundFromSupplier)}</span>
+                                        </div>
+                                    </div>
+                                    {selectedOrder.refundInfo.reason && (
+                                        <p className="mt-2 text-sm text-gray-600"><strong>Lý do:</strong> {selectedOrder.refundInfo.reason}</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

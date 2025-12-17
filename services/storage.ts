@@ -169,7 +169,8 @@ export const createOrder = async (
   customerId: string,
   customerName: string,
   customerPhone: string,
-  items: any[]
+  items: any[],
+  notes?: string
 ): Promise<Order> => {
   const totalAmount = items.reduce((sum, item) => sum + item.priceAtSale, 0);
 
@@ -181,6 +182,7 @@ export const createOrder = async (
     items,
     totalAmount,
     status: 'completed',
+    notes: notes || '',
     createdAt: new Date().toISOString(),
   };
 

@@ -56,7 +56,7 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
   }, [activeTab]);
 
   const handleCreateOrder = async (e: React.FormEvent, data: any) => {
-    const { customerMode, selectedCustomerId, newCustData, pendingItems, resetForm } = data;
+    const { customerMode, selectedCustomerId, newCustData, pendingItems, orderNotes, resetForm } = data;
 
     if (pendingItems.length === 0) return alert("Vui lòng thêm ít nhất một sản phẩm vào đơn hàng");
 
@@ -87,7 +87,7 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
       }
     }
 
-    await db.createOrder(finalCustomerId, finalCustName, finalCustPhone, pendingItems);
+    await db.createOrder(finalCustomerId, finalCustName, finalCustPhone, pendingItems, orderNotes);
 
     await loadData();
     setActiveTab('list');

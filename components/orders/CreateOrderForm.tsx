@@ -40,6 +40,9 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
     // Cart State (Multiple Items)
     const [pendingItems, setPendingItems] = useState<OrderItem[]>([]);
 
+    // Order Notes
+    const [orderNotes, setOrderNotes] = useState('');
+
     const filteredCustomers = customers.filter(c =>
         c.name.toLowerCase().includes(searchCustTerm.toLowerCase()) ||
         c.phone.includes(searchCustTerm)
@@ -115,12 +118,14 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
             selectedCustomerId,
             newCustData,
             pendingItems,
+            orderNotes,
             // Helper to reset form
             resetForm: () => {
                 setNewCustData({ name: '', email: '', phone: '', fbLink: '' });
                 setSelectedCustomerId('');
                 setPendingItems([]);
                 setSearchCustTerm('');
+                setOrderNotes('');
             }
         };
 
@@ -347,6 +352,18 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
                                     </table>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Order Notes */}
+                        <div className="mt-6">
+                            <label className="text-sm font-medium text-gray-700 block mb-2">Ghi chú đơn hàng</label>
+                            <textarea
+                                placeholder="Nhập ghi chú cho đơn hàng (tùy chọn)..."
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                                rows={3}
+                                value={orderNotes}
+                                onChange={(e) => setOrderNotes(e.target.value)}
+                            />
                         </div>
                     </div>
 

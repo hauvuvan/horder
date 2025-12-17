@@ -45,6 +45,7 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   status: 'completed' | 'pending' | 'cancelled';
+  notes?: string; // Ghi chú đơn hàng
   refundInfo?: OrderRefund; // Thông tin hoàn tiền nếu status là cancelled
   createdAt: string;
 }

@@ -42,9 +42,11 @@ const orderSchema = new mongoose.Schema({
     customerId: String,
     customerName: String,
     customerPhone: String,
-    items: [{ productId: String, productName: String, variantId: String, variantName: String, priceAtSale: Number }],
+    items: [{ productId: String, productName: String, variantId: String, variantName: String, priceAtSale: Number, costAtSale: Number, usageTime: String }],
     totalAmount: Number,
     status: String,
+    notes: String,
+    refundInfo: { refundToCustomer: Number, refundFromSupplier: Number, refundDate: String, reason: String },
     createdAt: String
 });
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
