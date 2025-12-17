@@ -24,8 +24,8 @@ const CustomerView: React.FC = () => {
     init();
   }, []);
 
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.phone.includes(searchTerm) ||
     c.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -44,9 +44,9 @@ const CustomerView: React.FC = () => {
           <p className="text-sm text-gray-500">Xem thông tin và lịch sử mua hàng</p>
         </div>
         <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Tìm tên, SĐT, Email..." 
+          <input
+            type="text"
+            placeholder="Tìm tên, SĐT, Email..."
             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full md:w-64 bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -67,8 +67,8 @@ const CustomerView: React.FC = () => {
             const totalSpent = history.reduce((sum, order) => sum + order.totalAmount, 0);
 
             return (
-              <div 
-                key={customer.id} 
+              <div
+                key={customer.id}
                 onClick={() => setSelectedCustomer(customer)}
                 className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-200 transition cursor-pointer group"
               >
@@ -80,10 +80,10 @@ const CustomerView: React.FC = () => {
                     {history.length} đơn
                   </div>
                 </div>
-                
+
                 <h3 className="text-lg font-bold text-gray-800 mb-1">{customer.name}</h3>
                 <p className="text-sm text-gray-500 mb-4 flex items-center gap-2">
-                   <Phone size={14} /> {customer.phone}
+                  <Phone size={14} /> {customer.phone}
                 </p>
 
                 <div className="space-y-2 text-sm text-gray-600">
@@ -122,53 +122,59 @@ const CustomerView: React.FC = () => {
             </div>
 
             <div className="p-6 overflow-y-auto">
-               {/* Info Section */}
-               <div className="grid grid-cols-2 gap-4 mb-6 bg-indigo-50 p-4 rounded-lg">
-                  <div>
-                    <p className="text-xs text-indigo-400 uppercase font-bold">Liên hệ</p>
-                    <p className="text-gray-800 font-medium">{selectedCustomer.phone}</p>
-                    <p className="text-gray-600 text-sm">{selectedCustomer.email}</p>
+              {/* Info Section */}
+              <div className="grid grid-cols-2 gap-4 mb-6 bg-indigo-50 p-4 rounded-lg">
+                <div>
+                  <p className="text-xs text-indigo-400 uppercase font-bold mb-2">Liên hệ</p>
+                  <div className="space-y-1">
+                    <p className="text-gray-800 font-medium flex items-center gap-2">
+                      <Phone size={14} className="text-indigo-500" /> {selectedCustomer.phone}
+                    </p>
+                    <p className="text-gray-600 text-sm flex items-center gap-2">
+                      <Mail size={14} className="text-indigo-500" /> {selectedCustomer.email || 'Chưa có email'}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-xs text-indigo-400 uppercase font-bold">Mạng xã hội</p>
-                    {selectedCustomer.fbLink ? (
-                      <a href={selectedCustomer.fbLink} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm break-all">
-                        {selectedCustomer.fbLink}
-                      </a>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Không có link FB</span>
-                    )}
-                  </div>
-               </div>
-
-               <h4 className="font-bold text-gray-800 mb-3">Đơn hàng đã mua</h4>
-               <div className="space-y-4">
-                  {getCustomerHistory(selectedCustomer.id).length === 0 ? (
-                    <p className="text-gray-500 italic">Khách hàng chưa mua sản phẩm nào.</p>
+                </div>
+                <div>
+                  <p className="text-xs text-indigo-400 uppercase font-bold">Mạng xã hội</p>
+                  {selectedCustomer.fbLink ? (
+                    <a href={selectedCustomer.fbLink} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm break-all">
+                      {selectedCustomer.fbLink}
+                    </a>
                   ) : (
-                    getCustomerHistory(selectedCustomer.id).map(order => (
-                      <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
-                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-medium text-gray-500">
-                              {new Date(order.createdAt).toLocaleString('vi-VN')}
-                            </span>
-                            <span className="text-sm font-bold text-emerald-600">{formatCurrency(order.totalAmount)}</span>
-                         </div>
-                         <div className="space-y-2">
-                            {order.items.map((item, idx) => (
-                              <div key={idx} className="flex justify-between text-sm">
-                                <span>• {item.productName}</span>
-                                <div className="text-right">
-                                  <span className="text-gray-600 mr-3">{item.usageTime}</span>
-                                  <span className="font-medium">{formatCurrency(item.priceAtSale)}</span>
-                                </div>
-                              </div>
-                            ))}
-                         </div>
-                      </div>
-                    ))
+                    <span className="text-gray-400 text-sm">Không có link FB</span>
                   )}
-               </div>
+                </div>
+              </div>
+
+              <h4 className="font-bold text-gray-800 mb-3">Đơn hàng đã mua</h4>
+              <div className="space-y-4">
+                {getCustomerHistory(selectedCustomer.id).length === 0 ? (
+                  <p className="text-gray-500 italic">Khách hàng chưa mua sản phẩm nào.</p>
+                ) : (
+                  getCustomerHistory(selectedCustomer.id).map(order => (
+                    <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-medium text-gray-500">
+                          {new Date(order.createdAt).toLocaleString('vi-VN')}
+                        </span>
+                        <span className="text-sm font-bold text-emerald-600">{formatCurrency(order.totalAmount)}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex justify-between text-sm">
+                            <span>• {item.productName}</span>
+                            <div className="text-right">
+                              <span className="text-gray-600 mr-3">{item.usageTime}</span>
+                              <span className="font-medium">{formatCurrency(item.priceAtSale)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
