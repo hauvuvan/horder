@@ -87,7 +87,7 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
       }
     }
 
-    await db.createOrder(finalCustomerId, finalCustName, finalCustPhone, pendingItems, orderNotes);
+    await db.createOrder(finalCustomerId, finalCustName, finalCustPhone, pendingItems, orderNotes, data.orderDate);
 
     await loadData();
     setActiveTab('list');

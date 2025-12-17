@@ -43,6 +43,9 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
     // Order Notes
     const [orderNotes, setOrderNotes] = useState('');
 
+    // Order Date (Registration Date)
+    const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
+
     const filteredCustomers = customers.filter(c =>
         c.name.toLowerCase().includes(searchCustTerm.toLowerCase()) ||
         c.phone.includes(searchCustTerm)
@@ -119,6 +122,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
             newCustData,
             pendingItems,
             orderNotes,
+            orderDate,
             // Helper to reset form
             resetForm: () => {
                 setNewCustData({ name: '', email: '', phone: '', fbLink: '' });
@@ -126,6 +130,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
                 setPendingItems([]);
                 setSearchCustTerm('');
                 setOrderNotes('');
+                setOrderDate(new Date().toISOString().split('T')[0]);
             }
         };
 
@@ -136,6 +141,24 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
                 <form onSubmit={handleSubmit} className="space-y-8">
+                    {/* Step 0: Order Info (Date) */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-800">Thông tin đơn hàng</h3>
+                            <p className="text-sm text-gray-500">Ngày đăng ký sẽ được dùng để tính thời hạn sử dụng</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <label className="text-sm font-medium text-gray-700">Ngày đăng ký:</label>
+                            <input
+                                type="date"
+                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 outline-none block"
+                                value={orderDate}
+                                onChange={(e) => setOrderDate(e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
+
                     {/* Step 1: Customer Info */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                         <div className="flex justify-between items-center mb-6">

@@ -170,9 +170,27 @@ export const createOrder = async (
   customerName: string,
   customerPhone: string,
   items: any[],
-  notes?: string
+  notes?: string,
+  createdAt?: string
 ): Promise<Order> => {
   const totalAmount = items.reduce((sum, item) => sum + item.priceAtSale, 0);
+
+  // If createdAt provided (YYYY-MM-DD), append current time for precision, or just use as is?
+  // User wants to calculate expire date based on this. Best to stick to usage of ISO string.
+  // If user picks 2023-10-27, we can set it to T00:00:00 or current time.
+  // Let's use current time part if it's today, otherwise local time noon to be safe?
+  // Simplest: just use the date string provided by input + current time?
+  // Actually, input type="date" returns YYYY-MM-DD.
+  // We should transform it to ISO string.
+
+  let finalCreatedAt = new Date().toISOString();
+  if (createdAt) {
+    // Create date from YYYY-MM-DD and set time to current time
+    const dateObj = new Date(createdAt);
+    const now = new Date();
+    dateObj.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    finalCreatedAt = dateObj.toISOString();
+  }
 
   const newOrder = {
     id: generateId(), // Client gen ID or Server gen ID? Server schema has ID required. Let's generate here.
@@ -183,7 +201,7 @@ export const createOrder = async (
     totalAmount,
     status: 'completed',
     notes: notes || '',
-    createdAt: new Date().toISOString(),
+    createdAt: finalCreatedAt,
   };
 
   return await api.post('/orders', newOrder);
