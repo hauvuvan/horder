@@ -10,7 +10,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
-const MONGODB_URI = process.env.MONGODB_URI;
+// Fallback to provided URI if env var is missing (for immediate fix)
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://hauvanvo:laEjtdo4J8SxOHCu@horder.0w6aikr.mongodb.net/?appName=HORDER';
 
 // Middleware
 app.set('trust proxy', 1); // Trust Vercel proxy
@@ -22,19 +23,47 @@ const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100 // limit each IP to 100 requests per windowMs
 });
+// Apply limiter only to API routes if desired, or globally
 app.use('/api', limiter);
+
+// Database Connection Helper
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) {
+        return;
+    }
+    if (!MONGODB_URI) {
+        console.error('FATAL ERROR: MONGODB_URI environment variable is missing!');
+        throw new Error('MONGODB_URI is missing');
+    }
+    try {
+        await mongoose.connect(MONGODB_URI);
+        console.log('Connected to MongoDB');
+    } catch (err) {
+        console.error('MongoDB connection error:', err);
+        throw err;
+    }
+};
+
+// Middleware to ensure DB is connected before handling requests
+app.use(async (req, res, next) => {
+    // Skip DB connection for health checks if possible, but for simplicity/safety we connect
+    if (req.path === '/api/health') return next();
+
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        res.status(500).json({ message: 'Database Connection Failed' });
+    }
+});
 
 // Routes
 app.use('/api', apiRoutes);
 
-// Database Connection
-if (MONGODB_URI) {
-    mongoose.connect(MONGODB_URI)
-        .then(() => console.log('Connected to MongoDB'))
-        .catch(err => console.error('MongoDB connection error:', err));
-} else {
-    console.error('FATAL ERROR: MONGODB_URI environment variable is missing!');
-}
+// Health Check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Only listen if not importing as a module (e.g. Vercel imports it)
 if (process.env.NODE_ENV !== 'production') {
