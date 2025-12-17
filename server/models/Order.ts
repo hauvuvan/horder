@@ -23,6 +23,7 @@ export interface IOrder extends Document {
     items: IOrderItem[];
     totalAmount: number;
     status: 'completed' | 'pending' | 'cancelled';
+    notes?: string;
     refundInfo?: IOrderRefund;
     createdAt: string;
 }
@@ -41,6 +42,7 @@ const OrderSchema: Schema = new Schema({
     }],
     totalAmount: { type: Number, required: true },
     status: { type: String, enum: ['completed', 'pending', 'cancelled'], default: 'completed' },
+    notes: { type: String, default: '' },
     refundInfo: {
         refundToCustomer: { type: Number },
         refundFromSupplier: { type: Number },
