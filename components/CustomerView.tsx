@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Facebook, Phone, Mail, ShoppingBag, X } from 'lucide-react';
+import { Search, Facebook, Phone, Mail, ShoppingBag, X, Edit, Save } from 'lucide-react';
 import { Customer, Order, formatCurrency } from '../types';
 import * as db from '../services/storage';
 
@@ -9,6 +9,10 @@ const CustomerView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+  // Edit Mode State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', phone: '', email: '', fbLink: '' });
 
   useEffect(() => {
     const init = async () => {
@@ -32,6 +36,33 @@ const CustomerView: React.FC = () => {
 
   const getCustomerHistory = (customerId: string) => {
     return orders.filter(o => o.customerId === customerId);
+  };
+
+  const handleEditClick = () => {
+    if (selectedCustomer) {
+      setEditForm({
+        name: selectedCustomer.name,
+        phone: selectedCustomer.phone,
+        email: selectedCustomer.email || '',
+        fbLink: selectedCustomer.fbLink || ''
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedCustomer) return;
+    const updatedCustomer: Customer = {
+      ...selectedCustomer,
+      name: editForm.name,
+      phone: editForm.phone,
+      email: editForm.email,
+      fbLink: editForm.fbLink
+    };
+    await db.updateCustomer(updatedCustomer);
+    setCustomers(customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+    setSelectedCustomer(updatedCustomer);
+    setIsEditing(false);
   };
 
   if (loading) return <div className="flex justify-center p-10"><div className="loader"></div></div>;
@@ -114,38 +145,104 @@ const CustomerView: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
                 <ShoppingBag size={20} className="text-indigo-600" />
-                Lịch sử mua hàng: {selectedCustomer.name}
+                {isEditing ? 'Chỉnh sửa thông tin' : `Lịch sử mua hàng: ${selectedCustomer.name}`}
               </h3>
-              <button onClick={() => setSelectedCustomer(null)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                {!isEditing && (
+                  <button onClick={handleEditClick} className="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50 transition" title="Chỉnh sửa">
+                    <Edit size={18} />
+                  </button>
+                )}
+                <button onClick={() => { setSelectedCustomer(null); setIsEditing(false); }} className="text-gray-400 hover:text-gray-600">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 overflow-y-auto">
-              {/* Info Section */}
-              <div className="grid grid-cols-2 gap-4 mb-6 bg-indigo-50 p-4 rounded-lg">
-                <div>
-                  <p className="text-xs text-indigo-400 uppercase font-bold mb-2">Liên hệ</p>
-                  <div className="space-y-1">
-                    <p className="text-gray-800 font-medium flex items-center gap-2">
-                      <Phone size={14} className="text-indigo-500" /> {selectedCustomer.phone}
-                    </p>
-                    <p className="text-gray-600 text-sm flex items-center gap-2">
-                      <Mail size={14} className="text-indigo-500" /> {selectedCustomer.email || 'Chưa có email'}
-                    </p>
+              {/* Edit Form or Info Section */}
+              {isEditing ? (
+                <div className="space-y-4 mb-6 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <h4 className="font-bold text-gray-800 mb-3">Chỉnh sửa thông tin khách hàng</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">Tên khách hàng *</label>
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">Số điện thoại *</label>
+                      <input
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-1">Link Facebook</label>
+                      <input
+                        type="text"
+                        value={editForm.fbLink}
+                        onChange={(e) => setEditForm({ ...editForm, fbLink: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+                    >
+                      <Save size={16} /> Lưu thay đổi
+                    </button>
                   </div>
                 </div>
-                <div>
-                  <p className="text-xs text-indigo-400 uppercase font-bold">Mạng xã hội</p>
-                  {selectedCustomer.fbLink ? (
-                    <a href={selectedCustomer.fbLink} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm break-all">
-                      {selectedCustomer.fbLink}
-                    </a>
-                  ) : (
-                    <span className="text-gray-400 text-sm">Không có link FB</span>
-                  )}
+              ) : (
+                /* Info Section */
+                <div className="grid grid-cols-2 gap-4 mb-6 bg-indigo-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-xs text-indigo-400 uppercase font-bold mb-2">Liên hệ</p>
+                    <div className="space-y-1">
+                      <p className="text-gray-800 font-medium flex items-center gap-2">
+                        <Phone size={14} className="text-indigo-500" /> {selectedCustomer.phone}
+                      </p>
+                      <p className="text-gray-600 text-sm flex items-center gap-2">
+                        <Mail size={14} className="text-indigo-500" /> {selectedCustomer.email || 'Chưa có email'}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-indigo-400 uppercase font-bold">Mạng xã hội</p>
+                    {selectedCustomer.fbLink ? (
+                      <a href={selectedCustomer.fbLink} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm break-all">
+                        {selectedCustomer.fbLink}
+                      </a>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Không có link FB</span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <h4 className="font-bold text-gray-800 mb-3">Đơn hàng đã mua</h4>
               <div className="space-y-4">

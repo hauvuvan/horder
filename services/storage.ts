@@ -159,6 +159,11 @@ export const createCustomer = async (customerData: Omit<Customer, 'id' | 'create
   return await api.post('/customers', newCustomer);
 };
 
+// Update existing customer
+export const updateCustomer = async (customer: Customer): Promise<void> => {
+  await api.put(`/customers/${customer.id}`, customer);
+};
+
 // --- ORDERS ---
 export const getOrders = async (): Promise<Order[]> => {
   // Backend sorts by createdAt desc already
