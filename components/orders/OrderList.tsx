@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Search, Filter, AlertCircle, Clock, Trash2, RefreshCcw, X, User, Phone, FileText, Calendar, Package } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Search, Filter, AlertCircle, Clock, Trash2, RefreshCcw, X, User, Phone, FileText, Calendar, Package, Edit, Save } from 'lucide-react';
 import { Order } from '../../types';
 import { calculateExpiry } from '../../utils/date';
 import { formatCurrency } from '../../utils/format';
@@ -12,6 +12,7 @@ interface OrderListProps {
     setStatusFilter: (status: 'all' | 'active' | 'expired' | 'cancelled') => void;
     onOpenRefundModal: (order: Order) => void;
     onRequestDelete: (id: string) => void;
+    onUpdateOrder: (order: Order) => Promise<void>;
 }
 
 const OrderList: React.FC<OrderListProps> = ({
@@ -21,10 +22,28 @@ const OrderList: React.FC<OrderListProps> = ({
     statusFilter,
     setStatusFilter,
     onOpenRefundModal,
-    onRequestDelete
+    onRequestDelete,
+    onUpdateOrder
 }) => {
     // Order Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [isEditingNotes, setIsEditingNotes] = useState(false);
+    const [tempNotes, setTempNotes] = useState('');
+
+    useEffect(() => {
+        if (selectedOrder) {
+            setTempNotes(selectedOrder.notes || '');
+            setIsEditingNotes(false);
+        }
+    }, [selectedOrder]);
+
+    const handleSaveNotes = async () => {
+        if (!selectedOrder) return;
+        const updatedOrder = { ...selectedOrder, notes: tempNotes };
+        await onUpdateOrder(updatedOrder);
+        setSelectedOrder(updatedOrder);
+        setIsEditingNotes(false);
+    };
 
     // Filter Orders Logic
     const filteredOrders = useMemo(() => orders.filter(order => {
@@ -246,14 +265,52 @@ const OrderList: React.FC<OrderListProps> = ({
                             </div>
 
                             {/* Order Notes */}
-                            {selectedOrder.notes && (
-                                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                                    <p className="text-xs text-yellow-600 uppercase font-bold mb-2 flex items-center gap-1">
+                            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                <div className="flex justify-between items-start mb-2">
+                                    <p className="text-xs text-yellow-600 uppercase font-bold flex items-center gap-1">
                                         <FileText size={12} /> Ghi chú
                                     </p>
-                                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{selectedOrder.notes}</p>
+                                    {!isEditingNotes && (
+                                        <button
+                                            onClick={() => setIsEditingNotes(true)}
+                                            className="text-yellow-600 hover:text-yellow-800 p-1 rounded hover:bg-yellow-100 transition"
+                                            title="Chỉnh sửa ghi chú"
+                                        >
+                                            <Edit size={14} />
+                                        </button>
+                                    )}
                                 </div>
-                            )}
+
+                                {isEditingNotes ? (
+                                    <div className="space-y-2">
+                                        <textarea
+                                            className="w-full p-2 border border-yellow-300 rounded bg-white text-sm outline-none focus:ring-2 focus:ring-yellow-400"
+                                            rows={3}
+                                            value={tempNotes}
+                                            onChange={(e) => setTempNotes(e.target.value)}
+                                            placeholder="Nhập ghi chú..."
+                                        />
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => setIsEditingNotes(false)}
+                                                className="px-3 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50"
+                                            >
+                                                Hủy
+                                            </button>
+                                            <button
+                                                onClick={handleSaveNotes}
+                                                className="px-3 py-1 text-xs font-bold text-white bg-yellow-600 rounded hover:bg-yellow-700 flex items-center gap-1"
+                                            >
+                                                <Save size={12} /> Lưu
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                                        {selectedOrder.notes || <span className="text-gray-400 italic">Chưa có ghi chú (Nhấn biểu tượng bút chì để thêm)</span>}
+                                    </p>
+                                )}
+                            </div>
 
                             {/* Products List */}
                             <div>

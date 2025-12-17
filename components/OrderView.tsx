@@ -204,6 +204,12 @@ const OrderView: React.FC<OrderViewProps> = ({ initialTab = 'list' }) => {
           setStatusFilter={setStatusFilter}
           onOpenRefundModal={handleOpenRefundModal}
           onRequestDelete={onRequestDelete}
+          onUpdateOrder={async (updatedOrder) => {
+            setLoading(true);
+            await db.updateOrder(updatedOrder);
+            await loadData();
+            setLoading(false);
+          }}
         />
       )}
 
