@@ -33,8 +33,15 @@ const api = {
         body: JSON.stringify(data),
       });
       // if (!response.ok) throw new Error(`API Error: ${response.statusText}`); 
-      // Allow 400/401 to pass through for auth handling, or handle generic errors
-      return await response.json();
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.error('Invalid JSON response:', text);
+        // If it's a Vercel error page, it usually starts with "A server error..." or HTML
+        const errorMsg = text.length < 100 ? text : `Server Error (${response.status}): Invalid Response Format`;
+        throw new Error(errorMsg);
+      }
     } catch (error) {
       console.error(`POST ${endpoint} failed:`, error);
       throw error;

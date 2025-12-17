@@ -19,7 +19,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.556.0",
-    "mongoose": "^9.0.1",
+    "mongoose": "8.9.2",
     "react": "^19.2.1",
     "react-dom": "^19.2.1"
   },

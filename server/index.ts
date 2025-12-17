@@ -32,6 +32,8 @@ if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI)
         .then(() => console.log('Connected to MongoDB'))
         .catch(err => console.error('MongoDB connection error:', err));
+} else {
+    console.error('FATAL ERROR: MONGODB_URI environment variable is missing!');
 }
 
 // Only listen if not importing as a module (e.g. Vercel imports it)
