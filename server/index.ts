@@ -58,7 +58,29 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
+// Mount at /api for standard behavior
 app.use('/api', apiRoutes);
+// Mount at / as a fallback if Vercel strips the prefix
+app.use('/', apiRoutes);
+
+// 404 Handler (Must be after routes)
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Endpoint not found',
+        path: req.path
+    });
+});
+
+// Global Error Handler
+app.use((err: any, req: any, res: any, next: any) => {
+    console.error('SERVER ERROR:', err);
+    res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+});
 
 // Health Check
 app.get('/api/health', (req, res) => {
