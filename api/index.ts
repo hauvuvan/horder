@@ -49,17 +49,36 @@ const orderSchema = new mongoose.Schema({
 });
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
-// --- Database Connection ---
-let isConnected = false;
+// --- Database Connection (Optimized for Serverless) ---
+// Cache connection promise to prevent multiple simultaneous connection attempts
+let cachedConnection: Promise<typeof mongoose> | null = null;
+
 const connectDB = async () => {
-    if (isConnected || mongoose.connection.readyState >= 1) {
+    // Return early if already connected
+    if (mongoose.connection.readyState >= 1) {
         return;
     }
+
+    // Reuse cached connection promise if exists
+    if (cachedConnection) {
+        await cachedConnection;
+        return;
+    }
+
     if (!MONGODB_URI) {
         throw new Error('MONGODB_URI is missing');
     }
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
+
+    // Create and cache the connection promise
+    cachedConnection = mongoose.connect(MONGODB_URI, {
+        // Performance optimizations for serverless
+        serverSelectionTimeoutMS: 5000, // Fail fast if no connection
+        socketTimeoutMS: 45000,
+        maxPoolSize: 1, // Minimal pool for serverless
+        minPoolSize: 0,
+    });
+
+    await cachedConnection;
     console.log('Connected to MongoDB');
 };
 
