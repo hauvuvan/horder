@@ -63,6 +63,11 @@ app.use('/api', apiRoutes);
 // Mount at / as a fallback if Vercel strips the prefix
 app.use('/', apiRoutes);
 
+// Health Check (before 404 handler)
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // 404 Handler (Must be after routes)
 app.use((req, res) => {
     res.status(404).json({
@@ -80,11 +85,6 @@ app.use((err: any, req: any, res: any, next: any) => {
         message: 'Internal Server Error',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
-});
-
-// Health Check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Only listen if not importing as a module (e.g. Vercel imports it)

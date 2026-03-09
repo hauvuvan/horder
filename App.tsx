@@ -88,6 +88,14 @@ const App: React.FC = () => {
         {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
+      {/* Mobile Backdrop Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:block
@@ -151,7 +159,7 @@ const App: React.FC = () => {
         </nav>
 
         <div className="absolute bottom-0 w-full p-6 border-t border-slate-800 text-xs text-slate-500">
-          &copy; 2024 HORDER App
+          &copy; 2025 HORDER App
         </div>
       </aside>
 

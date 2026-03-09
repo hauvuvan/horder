@@ -163,11 +163,13 @@ app.put('/password', verifyToken, async (req: any, res) => {
 
 app.get('/products', verifyToken, async (req, res) => { await connectDB(); res.json(await Product.find()); });
 app.post('/products', verifyToken, async (req, res) => { await connectDB(); res.status(201).json(await new Product(req.body).save()); });
+app.put('/products/:id', verifyToken, async (req, res) => { await connectDB(); res.json(await Product.findOneAndUpdate({ id: req.params.id }, req.body, { new: true })); });
 app.delete('/products/:id', verifyToken, async (req, res) => { await connectDB(); await Product.findOneAndDelete({ id: req.params.id }); res.json({ message: 'Deleted' }); });
 
 app.get('/customers', verifyToken, async (req, res) => { await connectDB(); res.json(await Customer.find()); });
 app.post('/customers', verifyToken, async (req, res) => { await connectDB(); res.status(201).json(await new Customer(req.body).save()); });
 app.put('/customers/:id', verifyToken, async (req, res) => { await connectDB(); res.json(await Customer.findOneAndUpdate({ id: req.params.id }, req.body, { new: true })); });
+app.delete('/customers/:id', verifyToken, async (req, res) => { await connectDB(); await Customer.findOneAndDelete({ id: req.params.id }); res.json({ message: 'Deleted' }); });
 
 app.get('/orders', verifyToken, async (req, res) => { await connectDB(); res.json(await Order.find().sort({ createdAt: -1 })); });
 app.post('/orders', verifyToken, async (req, res) => { await connectDB(); res.status(201).json(await new Order(req.body).save()); });

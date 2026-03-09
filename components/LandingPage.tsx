@@ -84,7 +84,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 </form>
 
                 <div className="mt-8 text-center text-xs text-slate-500">
-                    &copy; 2024 HORDER. Security Access.
+                    &copy; 2025 HORDER. Security Access.
                 </div>
             </div>
         </div>

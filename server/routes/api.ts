@@ -142,6 +142,15 @@ router.post('/products', verifyToken, async (req, res) => {
     }
 });
 
+router.put('/products/:id', verifyToken, async (req, res) => {
+    try {
+        const updatedProduct = await Product.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        res.json(updatedProduct);
+    } catch (err) {
+        res.status(400).json({ message: (err as Error).message });
+    }
+});
+
 router.delete('/products/:id', verifyToken, async (req, res) => {
     try {
         await Product.findOneAndDelete({ id: req.params.id });
@@ -178,6 +187,15 @@ router.put('/customers/:id', verifyToken, async (req, res) => {
         res.json(updatedCustomer);
     } catch (err) {
         res.status(400).json({ message: (err as Error).message });
+    }
+});
+
+router.delete('/customers/:id', verifyToken, async (req, res) => {
+    try {
+        await Customer.findOneAndDelete({ id: req.params.id });
+        res.json({ message: 'Deleted Customer' });
+    } catch (err) {
+        res.status(500).json({ message: (err as Error).message });
     }
 });
 

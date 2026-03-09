@@ -123,14 +123,17 @@ export const getProducts = async (): Promise<Product[]> => {
   return await api.get('/products');
 };
 
-export const saveProduct = async (product: Product) => {
-  // Check if exists logic typically handled by backend or ID check
-  // For simplicity, we can try creating. If ID exists, backend should likely update or reject.
-  // Since we don't have a direct 'upsert' endpoint in the simple route, we might assume new for now
-  // or use a specific implementation.
-  // HOWEVER, for this specific migration where we might be seeding:
-  // Let's assume we post. Real app might check existence first.
-  await api.post('/products', product);
+export const saveProduct = async (product: Product, isNew: boolean = false) => {
+  if (isNew) {
+    await api.post('/products', product);
+  } else {
+    // Try update first; if product doesn't exist yet, fall back to create
+    try {
+      await api.put(`/products/${product.id}`, product);
+    } catch {
+      await api.post('/products', product);
+    }
+  }
 };
 
 export const deleteProduct = async (id: string) => {
@@ -237,7 +240,6 @@ export const deleteOrder = async (id: string): Promise<void> => {
   await api.delete(`/orders/${id}`);
 };
 
-// --- BACKUP / RESTORE ---
 // --- BACKUP / RESTORE ---
 export const backupData = async () => {
   try {
