@@ -1,6 +1,7 @@
 export interface ProductVariant {
   id: string;
-  duration: string; // 1 tháng, 1 năm...
+  variantType?: string; // Loại biến thể (VD: Thời gian, Loại SP...)
+  duration: string; // Giá trị biến thể (VD: 1 tháng, Cấp sẵn...)
   importPrice: number;
   sellPrice: number;
 }

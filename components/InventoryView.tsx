@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Save, X, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
-import { Product, ProductVariant, formatCurrency, generateId, USAGE_OPTIONS } from '../types';
+import { Plus, Edit2, Trash2, Save, X, AlertTriangle } from 'lucide-react';
+import { Product, ProductVariant, formatCurrency, generateId } from '../types';
 import * as db from '../services/storage';
 
 const InventoryView: React.FC = () => {
@@ -45,32 +45,67 @@ const InventoryView: React.FC = () => {
       });
     } else {
       setEditingProduct(null);
-      setFormData({ 
-        name: '', 
+      setFormData({
+        name: '',
         source: '',
-        variants: [{ id: generateId(), duration: USAGE_OPTIONS[0], importPrice: 0, sellPrice: 0 }]
+        variants: [{ id: generateId(), variantType: '', duration: '', importPrice: 0, sellPrice: 0 }]
       });
     }
     setIsModalOpen(true);
   };
 
-  const handleAddVariant = () => {
+  // Compute grouped variant structure for UI rendering
+  const getVariantGroups = () => {
+    const groups: { type: string; variants: ProductVariant[] }[] = [];
+    const seen = new Map<string, number>();
+    formData.variants.forEach(v => {
+      const type = v.variantType ?? '';
+      if (!seen.has(type)) {
+        seen.set(type, groups.length);
+        groups.push({ type, variants: [] });
+      }
+      groups[seen.get(type)!].variants.push(v);
+    });
+    return groups;
+  };
+
+  const handleAddVariantGroup = () => {
     setFormData(prev => ({
       ...prev,
-      variants: [...prev.variants, { id: generateId(), duration: USAGE_OPTIONS[0], importPrice: 0, sellPrice: 0 }]
+      variants: [...prev.variants, { id: generateId(), variantType: '', duration: '', importPrice: 0, sellPrice: 0 }]
     }));
   };
 
-  const handleRemoveVariant = (index: number) => {
-    const newVariants = [...formData.variants];
-    newVariants.splice(index, 1);
-    setFormData(prev => ({ ...prev, variants: newVariants }));
+  const handleAddVariantToGroup = (type: string) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: [...prev.variants, { id: generateId(), variantType: type, duration: '', importPrice: 0, sellPrice: 0 }]
+    }));
   };
 
-  const handleVariantChange = (index: number, field: keyof ProductVariant, value: any) => {
-    const newVariants = [...formData.variants];
-    newVariants[index] = { ...newVariants[index], [field]: value };
-    setFormData(prev => ({ ...prev, variants: newVariants }));
+  const handleRemoveVariantGroup = (type: string) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.filter(v => (v.variantType ?? '') !== type)
+    }));
+  };
+
+  const handleRemoveSingleVariant = (id: string) => {
+    setFormData(prev => ({ ...prev, variants: prev.variants.filter(v => v.id !== id) }));
+  };
+
+  const handleGroupTypeChange = (oldType: string, newType: string) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map(v => (v.variantType ?? '') === oldType ? { ...v, variantType: newType } : v)
+    }));
+  };
+
+  const handleSingleVariantChange = (id: string, field: keyof ProductVariant, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map(v => v.id === id ? { ...v, [field]: value } : v)
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +128,7 @@ const InventoryView: React.FC = () => {
     };
 
     setLoading(true);
-    await db.saveProduct(productToSave);
+    await db.saveProduct(productToSave, !editingProduct);
     await fetchProducts();
     setIsModalOpen(false);
   };
@@ -166,7 +201,7 @@ const InventoryView: React.FC = () => {
                       <div className="flex flex-wrap gap-1">
                         {p.variants && p.variants.map((v, idx) => (
                           <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded text-xs">
-                            {v.duration}
+                            {v.variantType ? `${v.variantType}: ${v.duration}` : v.duration}
                           </span>
                         ))}
                       </div>
@@ -245,70 +280,99 @@ const InventoryView: React.FC = () => {
               {/* Variants Section */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="block text-sm font-bold text-gray-800">Các gói biến thể (Thời hạn & Giá)</label>
-                  <button 
-                    type="button" 
-                    onClick={handleAddVariant}
+                  <label className="block text-sm font-bold text-gray-800">Các loại biến thể</label>
+                  <button
+                    type="button"
+                    onClick={handleAddVariantGroup}
                     className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
                   >
-                    <Plus size={16} /> Thêm biến thể
+                    <Plus size={16} /> Thêm loại biến thể
                   </button>
                 </div>
 
                 <div className="space-y-3">
-                  {formData.variants.map((variant, index) => (
-                    <div key={index} className="flex flex-col md:flex-row gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200 relative group">
-                      <div className="flex-1">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">Thời hạn</label>
-                        <select
-                          className="w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-sm outline-none focus:border-indigo-500"
-                          value={variant.duration}
-                          onChange={(e) => handleVariantChange(index, 'duration', e.target.value)}
-                        >
-                          {USAGE_OPTIONS.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">Giá Nhập</label>
-                        <input
-                          type="number"
-                          min="0"
-                          className="w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-sm outline-none focus:border-indigo-500"
-                          value={variant.importPrice}
-                          onChange={(e) => handleVariantChange(index, 'importPrice', e.target.value)}
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">Giá Bán</label>
-                        <input
-                          type="number"
-                          min="0"
-                          className="w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-semibold text-emerald-700 outline-none focus:border-indigo-500"
-                          value={variant.sellPrice}
-                          onChange={(e) => handleVariantChange(index, 'sellPrice', e.target.value)}
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveVariant(index)}
-                        className="absolute -top-2 -right-2 bg-red-100 text-red-500 p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm hover:bg-red-200"
-                        title="Xóa dòng này"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {formData.variants.length === 0 && (
+                  {getVariantGroups().length === 0 && (
                     <div className="text-center py-4 text-gray-400 text-sm italic border border-dashed rounded-lg">
-                      Chưa có biến thể nào. Vui lòng thêm biến thể.
+                      Chưa có biến thể nào. Vui lòng thêm loại biến thể.
                     </div>
                   )}
+
+                  {getVariantGroups().map((group, groupIdx) => (
+                    <div key={groupIdx} className="border border-gray-200 rounded-xl overflow-hidden">
+                      {/* Group Header */}
+                      <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+                        <input
+                          type="text"
+                          placeholder="Tên loại biến thể (VD: Thời gian, Loại SP...)"
+                          className="flex-1 px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-semibold outline-none focus:border-indigo-500"
+                          value={group.type}
+                          onChange={(e) => handleGroupTypeChange(group.type, e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVariantGroup(group.type)}
+                          className="text-red-400 hover:text-red-600 p-1 rounded shrink-0"
+                          title="Xóa loại này"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+
+                      {/* Group Items */}
+                      <div className="p-3 space-y-2">
+                        {/* Column Labels */}
+                        <div className="flex gap-2 px-1">
+                          <span className="flex-[2] text-xs font-medium text-gray-400">Giá trị</span>
+                          <span className="flex-1 text-xs font-medium text-gray-400">Giá nhập</span>
+                          <span className="flex-1 text-xs font-medium text-gray-400">Giá bán</span>
+                          <span className="w-6" />
+                        </div>
+
+                        {group.variants.map((variant) => (
+                          <div key={variant.id} className="flex gap-2 items-center">
+                            <input
+                              type="text"
+                              placeholder="VD: 1 tháng, Cấp sẵn..."
+                              className="flex-[2] px-3 py-2 rounded-md border border-gray-300 bg-white text-sm outline-none focus:border-indigo-500"
+                              value={variant.duration}
+                              onChange={(e) => handleSingleVariantChange(variant.id, 'duration', e.target.value)}
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              className="flex-1 px-3 py-2 rounded-md border border-gray-300 bg-white text-sm outline-none focus:border-indigo-500"
+                              value={variant.importPrice || ''}
+                              onChange={(e) => handleSingleVariantChange(variant.id, 'importPrice', e.target.value)}
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              className="flex-1 px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-semibold text-emerald-700 outline-none focus:border-indigo-500"
+                              value={variant.sellPrice || ''}
+                              onChange={(e) => handleSingleVariantChange(variant.id, 'sellPrice', e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSingleVariant(variant.id)}
+                              className="text-gray-300 hover:text-red-500 p-1 w-6 shrink-0"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddVariantToGroup(group.type)}
+                          className="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex items-center gap-1 pt-1"
+                        >
+                          <Plus size={12} /> Thêm giá trị
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </form>

@@ -292,7 +292,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({
                                         {selectedProductObj && selectedProductObj.variants ? (
                                             selectedProductObj.variants.map(v => (
                                                 <option key={v.id} value={v.id}>
-                                                    {v.duration} - {formatCurrency(v.sellPrice)}
+                                                    {v.variantType ? `${v.variantType}: ${v.duration}` : v.duration} - {formatCurrency(v.sellPrice)}
                                                 </option>
                                             ))
                                         ) : null}
